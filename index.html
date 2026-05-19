@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060608;--surface:#0d0d14;--accent:#6d5cff;--accent2:#ff5c8a;--text:#e8e8f0;--dim:#4a4a6a;--border:#1e1e30}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+input[type=range]{accent-color:var(--accent);width:100%}
+select{background:var(--surface);color:var(--text);border:2px solid var(--accent);border-radius:10px;padding:9px 32px 9px 12px;font-size:.875rem;font-family:'Syne',sans-serif;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right .5rem center;background-size:1.5em}
+button{cursor:pointer;font-family:'Syne',sans-serif;font-weight:700}
+textarea{font-family:'Syne',sans-serif;font-size:.875rem;resize:none;outline:none}
+
+/* ── SCREENS ── */
+#screen-api,#screen-setup,#screen-interview{display:none}
+#screen-api.active,#screen-setup.active,#screen-interview.active{display:block}
+
+/* ── API KEY SCREEN ── */
+#screen-api{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.api-box{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px}
+.api-box h1{font-size:1.4rem;font-weight:800;margin-bottom:6px}
+.api-box p{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--dim);margin-bottom:24px;line-height:1.6}
+.api-box input{width:100%;background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:.85rem;outline:none;margin-bottom:16px;transition:border-color .2s}
+.api-box input:focus{border-color:var(--accent)}
+.btn-primary{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#4f46e5);color:#fff;font-size:.95rem;font-weight:800;letter-spacing:.04em;transition:opacity .2s}
+.btn-primary:hover{opacity:.9}
+
+/* ── SETUP SCREEN ── */
+#screen-setup{min-height:100vh;padding:32px 20px;display:flex;flex-direction:column;align-items:center}
+.setup-wrap{width:100%;max-width:560px}
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.logo-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.logo-title{font-size:1.2rem;font-weight:800;letter-spacing:-.02em}
+.logo-sub{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--dim)}
+.label{font-family:'DM Mono',monospace;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);margin-bottom:8px;display:block}
+.section{margin-bottom:20px}
+.lang-row{display:flex;gap:6px;flex-wrap:wrap}
+.lang-btn{padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:#12121e;color:var(--dim);font-size:.85rem;transition:all .15s}
+.lang-btn.active{border-color:var(--accent);background:rgba(109,92,255,.15);color:var(--accent)}
+.lang-btn:hover:not(.active){border-color:var(--accent);color:#a78bfa}
+.mic-row{display:flex;gap:8px}
+.mic-row select{flex:1}
+.refresh-btn{padding:9px 14px;background:#1c1c30;border:2px solid var(--accent);border-radius:10px;color:#a78bfa;font-size:.85rem}
+.ctx-area{width:100%;height:120px;background:#12121e;border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);margin-bottom:8px;transition:border-color .2s}
+.ctx-area:focus{border-color:var(--accent)}
+.upload-zone{border:1px dashed var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;color:var(--dim);font-size:.875rem;transition:all .2s;margin-bottom:8px}
+.upload-zone:hover{border-color:var(--accent);color:var(--text);background:rgba(109,92,255,.04)}
+.upload-zone input{display:none}
+.enroll-box{background:#12121e;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px}
+.enroll-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.enroll-badge{font-family:'DM Mono',monospace;font-size:.72rem;padding:2px 10px;border-radius:20px;border:1px solid rgba(255,92,138,.3);background:rgba(255,92,138,.1);color:#ff5c8a}
+.enroll-badge.done{border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.1);color:#34d399}
+.enroll-desc{font-size:.8rem;color:var(--dim);line-height:1.6;margin-bottom:12px}
+.enroll-btn{width:100%;padding:10px;border-radius:10px;border:1px solid var(--accent);background:rgba(109,92,255,.2);color:#a78bfa;font-size:.875rem;transition:all .2s}
+.enroll-btn:hover{background:rgba(109,92,255,.35)}
+.enroll-btn.done-btn{border-color:#059669;background:rgba(5,150,105,.2);color:#34d399}
+.enroll-btn.error-btn{border-color:#dc2626;background:rgba(220,38,38,.15);color:#f87171}
+.enroll-progress{height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:6px}
+.enroll-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .1s}
+.enroll-info{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--dim);text-align:center;margin-top:8px}
+.silence-row{display:flex;align-items:center;gap:12px}
+.silence-label-small{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--dim)}
+.file-tag{display:flex;justify-content:space-between;background:rgba(92,255,216,.05);border:1px solid rgba(92,255,216,.15);border-radius:6px;padding:6px 12px;margin-bottom:6px}
+.file-tag span:first-child{font-family:'DM Mono',monospace;font-size:.75rem;color:#5cffd8}
+.file-tag span:last-child{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--dim)}
+
+/* ── INTERVIEW SCREEN ── */
+#screen-interview{height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#0c0c14;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;gap:6px}
+.topbar-langs{display:flex;gap:6px;flex-wrap:wrap}
+.top-lang{padding:4px 10px;border-radius:6px;border:1px solid var(--border);color:var(--dim);font-size:.78rem;transition:all .15s}
+.top-lang.active{border-color:var(--accent);background:rgba(109,92,255,.12);color:var(--accent)}
+.top-lang:hover:not(.active){border-color:var(--accent);color:#a78bfa}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.voice-badge{font-family:'DM Mono',monospace;font-size:.72rem;padding:2px 10px;border-radius:20px;border:1px solid var(--border);color:var(--dim);background:rgba(74,74,106,.2);transition:all .2s}
+.voice-badge.me{border-color:rgba(255,92,138,.3);background:rgba(255,92,138,.15);color:#ff5c8a}
+.voice-badge.other{border-color:rgba(109,92,255,.2);background:rgba(109,92,255,.15);color:#a78bfa}
+.back-btn{padding:4px 10px;border:1px solid var(--border);border-radius:6px;color:var(--dim);font-size:.78rem;background:transparent;transition:color .2s}
+.back-btn:hover{color:var(--text)}
+.status-bar{display:flex;align-items:center;gap:12px;padding:8px 16px;background:#12121e;border-bottom:1px solid var(--border);flex-shrink:0}
+.status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background .3s}
+.status-dot.idle{background:var(--dim)}
+.status-dot.listening{background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,.6);animation:pulse 1.5s infinite}
+.status-dot.generating{background:var(--accent);box-shadow:0 0 8px rgba(109,92,255,.6);animation:pulse 1.5s infinite}
+.status-dot.ready{background:#facc15}
+.status-dot.muted{background:var(--accent2);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.status-text{font-family:'DM Mono',monospace;font-size:.875rem;color:var(--dim);flex:1}
+.sbar{height:3px;background:var(--border);flex-shrink:0}
+.sbar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .1s linear}
+.main-area{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.response-card{background:#0c0c14;border:1px solid rgba(109,92,255,.3);border-left:3px solid var(--accent);border-radius:0 14px 14px 0;padding:20px;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.response-tag{font-family:'DM Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:8px}
+.response-text{color:#f0f0ff;font-weight:600;line-height:1.6;font-size:clamp(1.1rem,3vw,1.5rem)}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--dim);gap:8px;padding:40px}
+.empty-icon{font-size:2.5rem;opacity:.2}
+.empty-text{font-size:.875rem;line-height:1.7;max-width:280px}
+.heard-box{background:#12121e;border:1px solid var(--border);border-radius:12px;padding:10px 14px}
+.heard-label{font-family:'DM Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:4px}
+.heard-text{font-size:.88rem;color:#8888aa;line-height:1.5}
+.heard-interim{color:#2a2a40;font-style:italic}
+.error-text{font-family:'DM Mono',monospace;font-size:.875rem;color:#ff6b6b;text-align:center;padding:4px}
+.history-section{border-top:1px solid var(--border);padding-top:12px}
+.history-label{font-family:'DM Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:8px}
+.history-item{padding:8px 12px;background:#12121e;border-radius:8px;border:1px solid var(--border);margin-bottom:6px}
+.history-q{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--dim);margin-bottom:2px}
+.history-a{font-size:.8rem;color:#5a5a7a;line-height:1.4}
+.controls{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:#0c0c14;flex-shrink:0}
+.ctrl-main{flex:1;padding:14px;border-radius:12px;border:none;color:#fff;font-size:.875rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;background:linear-gradient(135deg,#059669,#047857)}
+.ctrl-main.stop{background:linear-gradient(135deg,#dc2626,#991b1b)}
+.ctrl-icon{padding:14px 12px;border-radius:12px;border:1px solid var(--border);background:#12121e;color:var(--dim);font-size:.875rem;transition:all .2s}
+.ctrl-icon:hover:not(:disabled){border-color:var(--accent);color:var(--text)}
+.ctrl-icon:disabled{opacity:.3;cursor:not-allowed}
+.pip-btn-main{padding:14px 12px;border-radius:12px;border:1px solid var(--border);background:#12121e;color:var(--dim);font-size:.875rem;transition:all .2s}
+.pip-btn-main.active{border-color:var(--accent);color:var(--accent)}
+.pip-btn-main:hover{border-color:var(--accent);color:#a78bfa}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ API KEY SCREEN -->
+<div id="screen-api">
+  <div class="api-box">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div class="logo-icon">🎙️</div>
+      <div>
+        <div class="logo-title">Interview Assistant</div>
+        <div class="logo-sub">real-time AI interview coach</div>
+      </div>
+    </div>
+    <p>Inserisci la tua Anthropic API key. Viene salvata solo nel tuo browser (localStorage) e non viene mai inviata a nessun server esterno tranne Anthropic.</p>
+    <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off">
+    <div id="api-error" style="font-family:'DM Mono',monospace;font-size:.72rem;color:#ff6b6b;margin-bottom:12px;display:none;line-height:1.7"></div>
+    <button class="btn-primary" onclick="saveApiKey()">Continua →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SETUP SCREEN -->
+<div id="screen-setup">
+  <div class="setup-wrap">
+    <div class="logo-row">
+      <div class="logo-icon">🎙️</div>
+      <div>
+        <div class="logo-title">Interview Assistant</div>
+        <div class="logo-sub">real-time AI interview coach · <span id="api-key-display" style="color:var(--accent)"></span> <button onclick="clearApiKey()" style="background:none;border:none;color:var(--dim);font-family:'DM Mono',monospace;font-size:.68rem;cursor:pointer;text-decoration:underline">change key</button></div>
+      </div>
+    </div>
+
+    <!-- Language -->
+    <div class="section">
+      <span class="label">Interview Language</span>
+      <div class="lang-row" id="lang-row"></div>
+    </div>
+
+    <!-- Audio -->
+    <div class="section">
+      <span class="label">Audio Source — Speech Recognition</span>
+      <div style="background:#12121e;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px">
+        <p style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--dim);margin-bottom:8px;line-height:1.6"><strong style="color:#a78bfa">🖥️ System audio</strong> — cattura direttamente l'audio di Zoom / Meet.</p>
+        <button id="sys-audio-btn" onclick="selectSystemAudio()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:.85rem;transition:all .2s">🖥️ Select system / app audio</button>
+        <p style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--dim);margin-top:6px">Per lo speech recognition con audio di sistema usa un cavo virtuale (BlackHole, CABLE Input…) come input qui sotto.</p>
+      </div>
+      <div class="mic-row">
+        <select id="mic-select"><option value="">🎤 Default microphone</option></select>
+        <button class="refresh-btn" onclick="loadMics()">↺</button>
+      </div>
+    </div>
+
+    <!-- Context -->
+    <div class="section">
+      <span class="label">Your Context (CV, Bio, Research)</span>
+      <textarea class="ctx-area" id="ctx-area" placeholder="Paste your CV, bio, key points, job description…"></textarea>
+      <label class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".pdf,.txt,.md" multiple onchange="handleFiles(this.files)">
+        <span id="upload-label">📄 Upload PDF or TXT — click or drag & drop</span>
+      </label>
+      <div id="file-tags"></div>
+    </div>
+
+    <!-- Voice Enrollment -->
+    <div class="enroll-box">
+      <div class="enroll-header">
+        <span style="font-size:.9rem;font-weight:700">🎤 Voice Recognition</span>
+        <span class="enroll-badge" id="enroll-badge">Not enrolled</span>
+      </div>
+      <p class="enroll-desc">Parla per 30 secondi — l'app impara la tua voce e ignora te durante il colloquio, trascrivendo solo l'intervistatore.</p>
+      <div id="enroll-recording" style="display:none">
+        <div class="enroll-progress"><div class="enroll-bar" id="enroll-bar"></div></div>
+        <div class="enroll-info" id="enroll-info-text"></div>
+      </div>
+      <button class="enroll-btn" id="enroll-btn" onclick="toggleEnroll()">🎤 Record my voice (30 sec)</button>
+      <div class="enroll-info" id="enroll-info"></div>
+    </div>
+
+    <!-- Silence -->
+    <div class="section">
+      <span class="label">Auto-generate after silence — <span id="silence-val" style="color:var(--accent)">2.5s</span></span>
+      <div class="silence-row">
+        <span class="silence-label-small">1s</span>
+        <input type="range" id="silence-slider" min="1000" max="5000" step="500" value="2500" oninput="updateSilence(this.value)">
+        <span class="silence-label-small">5s</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="startInterview()">START INTERVIEW →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ INTERVIEW SCREEN -->
+<div id="screen-interview">
+  <div class="topbar">
+    <div class="topbar-langs" id="top-langs"></div>
+    <div class="topbar-right">
+      <span class="voice-badge" id="voice-badge" style="display:none"></span>
+      <button class="back-btn" onclick="goSetup()">← Setup</button>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot idle" id="status-dot"></div>
+    <div class="status-text" id="status-text">Press START to begin</div>
+  </div>
+  <div class="sbar"><div class="sbar-fill" id="sbar-fill"></div></div>
+  <div class="main-area" id="main-area">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🎙️</div>
+      <div class="empty-text">Press START — the app listens continuously and generates automatically when the interviewer stops speaking.<br><br>Your voice is automatically ignored.</div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="ctrl-main" id="start-stop-btn" onclick="toggleSession()">🎙️ START</button>
+    <button class="ctrl-icon" id="now-btn" onclick="forceGenerate()" disabled title="Generate now">✦ NOW</button>
+    <button class="ctrl-icon" id="skip-btn" onclick="skipPause()" disabled title="Skip pause">⏭ SKIP</button>
+    <button class="pip-btn-main" id="pip-btn" onclick="openFloat()" title="Float above Zoom">🪟</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════ CONSTANTS / STATE ═════════════════════════════
+const LANGS = [
+  {code:'no',label:'Norsk',flag:'🇳🇴',stt:'nb-NO',name:'Norwegian Bokmål'},
+  {code:'en',label:'English',flag:'🇬🇧',stt:'en-US',name:'English'},
+  {code:'fr',label:'Français',flag:'🇫🇷',stt:'fr-FR',name:'French'},
+  {code:'it',label:'Italiano',flag:'🇮🇹',stt:'it-IT',name:'Italian'},
+  {code:'de',label:'Deutsch',flag:'🇩🇪',stt:'de-DE',name:'German'},
+]
+const PAUSE_MS = 25000
+const HISTORY_MAX = 7
+
+let apiKey = ''
+let language = 'no'
+let contextText = ''
+let micDeviceId = ''
+let silenceMs = 2500
+let voiceProfile = null
+let history = []
+
+// interview state
+let micStream = null  // reused across startRec / pitch monitor to avoid repeated permission prompts
+let isActive = false
+let isGenerating = false
+let isPaused = false
+let accumulated = ''
+let interim = ''
+let currentResponse = ''
+let recognition = null
+let pitchCtx = null
+let pitchInterval = null
+let isUserSpeaking = false
+let userSpeakingTO = null
+let silenceTimer = null
+let silenceAnimFrame = null
+let silenceStart = null
+let silenceWidth = 0
+let pauseTimer = null
+let pipWin = null
+let pipSync = null
+let nowDisabled = true
+let skipDisabled = true
+
+// enroll state
+let enrollState = 'idle' // idle|recording|done|error
+let enrollInterval = null
+let enrollTimeout = null
+let enrollStream = null
+let enrollCtx = null
+let enrollPitches = []
+
+// ══════════════════════════ PITCH DETECTION ══════════════════════════════
+function detectPitch(buf, sampleRate) {
+  const SIZE = buf.length
+  let rms = 0
+  for (let i = 0; i < SIZE; i++) rms += buf[i]*buf[i]
+  rms = Math.sqrt(rms/SIZE)
+  if (rms < 0.008) return 0
+  let r1=0, r2=SIZE-1
+  const thres=0.2
+  for (let i=0;i<SIZE/2;i++){if(Math.abs(buf[i])<thres){r1=i;break}}
+  for (let i=1;i<SIZE/2;i++){if(Math.abs(buf[SIZE-i])<thres){r2=SIZE-i;break}}
+  const seg=buf.slice(r1,r2), LEN=seg.length
+  if(LEN<2)return 0
+  const c=new Float32Array(LEN)
+  for(let i=0;i<LEN;i++)for(let j=0;j<LEN-i;j++)c[i]+=seg[j]*seg[j+i]
+  let d=0
+  while(d<LEN-1&&c[d]>c[d+1])d++
+  let maxval=-Infinity,maxpos=-1
+  for(let i=d;i<LEN;i++)if(c[i]>maxval){maxval=c[i];maxpos=i}
+  if(maxpos<1||maxpos>=LEN-1)return 0
+  const x1=c[maxpos-1],x2=c[maxpos],x3=c[maxpos+1]
+  const a=(x1+x3-2*x2)/2,b=(x3-x1)/2
+  let T0=maxpos
+  if(a)T0=maxpos-b/(2*a)
+  const freq=sampleRate/T0
+  return freq>80&&freq<400?freq:0
+}
+function buildProfile(pitches){
+  if(pitches.length<30)return null
+  const mean=pitches.reduce((a,b)=>a+b,0)/pitches.length
+  const variance=pitches.reduce((a,b)=>a+(b-mean)**2,0)/pitches.length
+  const std=Math.sqrt(variance)
+  return{min:Math.max(80,mean-2.5*std),max:Math.min(400,mean+2.5*std),mean,samples:pitches.length}
+}
+function isUserVoice(pitch){
+  if(!pitch||!voiceProfile)return false
+  return pitch>=voiceProfile.min&&pitch<=voiceProfile.max
+}
+
+// ══════════════════════════ API KEY SCREEN ════════════════════════════════
+function init(){
+  apiKey=localStorage.getItem('ia-api-key')||''
+  if(apiKey){showSetup()}else{show('api')}
+}
+async function saveApiKey(){
+  // Strip all non-printable and non-ASCII chars (they cause "non ISO-8859-1 code point" fetch errors)
+  const raw=document.getElementById('api-key-input').value
+  const v=raw.replace(/[^\x20-\x7E]/g,'').trim()
+  const errEl=document.getElementById('api-error')
+  const btn=document.querySelector('#screen-api .btn-primary')
+  if(!v){errEl.textContent='Inserisci la API key.';errEl.style.display='block';return}
+  btn.textContent='Verifica…';btn.disabled=true;errEl.style.display='none'
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'x-api-key':v,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true','content-type':'application/json'},
+      body:JSON.stringify({model:'claude-3-5-sonnet-20241022',max_tokens:5,messages:[{role:'user',content:'hi'}]})
+    })
+    if(res.status===401){throw new Error('API key non valida — controlla che sia corretta.')}
+    if(res.status===403){throw new Error('Accesso negato. Prova ad aprire il file da un URL HTTPS (vedi sotto).')}
+    if(!res.ok&&res.status!==200){
+      const d=await res.json().catch(()=>({}))
+      throw new Error(d?.error?.message||`Errore ${res.status}`)
+    }
+  }catch(e){
+    const msg=e.message||String(e)
+    if(msg.includes('Failed to fetch')||msg.includes('NetworkError')||msg.includes('Load failed')||msg.includes('CORS')||msg===''){
+      errEl.innerHTML=`⚠ Il browser non riesce a raggiungere api.anthropic.com.<br><br>
+        Prova a disabilitare eventuali <strong>estensioni ad blocker / VPN</strong> e riprova.<br>
+        Errore tecnico: <span style="color:#888">${msg||'network error'}</span>`
+    }else{
+      errEl.innerHTML=msg
+    }
+    errEl.style.display='block';btn.textContent='Continua →';btn.disabled=false;return
+  }
+  localStorage.setItem('ia-api-key',v)
+  apiKey=v
+  btn.textContent='Continua →';btn.disabled=false
+  showSetup()
+}
+function clearApiKey(){
+  localStorage.removeItem('ia-api-key')
+  apiKey=''
+  show('api')
+}
+document.getElementById('api-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveApiKey()})
+
+// ══════════════════════════ SETUP SCREEN ══════════════════════════════════
+function showSetup(){
+  buildLangRow()
+  loadMics()
+  const stored=localStorage.getItem('ia-config')
+  if(stored){
+    try{
+      const c=JSON.parse(stored)
+      language=c.language||'no'
+      silenceMs=c.silenceThreshold||2500
+      micDeviceId=c.micDeviceId||''
+      document.getElementById('silence-slider').value=silenceMs
+      updateSilence(silenceMs)
+    }catch(e){}
+  }
+  const short=apiKey.slice(0,12)+'…'
+  document.getElementById('api-key-display').textContent=short
+  setupUploadZone()
+  show('setup')
+  updateLangRow()
+}
+function show(name){
+  document.getElementById('screen-api').classList.remove('active')
+  document.getElementById('screen-setup').classList.remove('active')
+  document.getElementById('screen-interview').classList.remove('active')
+  document.getElementById('screen-'+name).classList.add('active')
+}
+function buildLangRow(){
+  const row=document.getElementById('lang-row')
+  row.innerHTML=LANGS.map(l=>`<button class="lang-btn${l.code===language?' active':''}" onclick="setLang('${l.code}')">${l.flag} ${l.label}</button>`).join('')
+}
+function updateLangRow(){
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'))
+  document.querySelectorAll('.lang-btn').forEach(b=>{if(b.textContent.includes(LANGS.find(l=>l.code===language)?.label))b.classList.add('active')})
+  // rebuild to be safe
+  buildLangRow()
+}
+function setLang(code){language=code;buildLangRow()}
+async function loadMics(){
+  try{
+    if(!micStream)micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false}})
+    const devices=await navigator.mediaDevices.enumerateDevices()
+    const mics=devices.filter(d=>d.kind==='audioinput')
+    const sel=document.getElementById('mic-select')
+    const cur=sel.value
+    sel.innerHTML='<option value="">🎤 Default microphone</option>'+mics.map(d=>`<option value="${d.deviceId}">${d.label||'Input device ('+d.deviceId.slice(0,8)+'…)'}</option>`).join('')
+    if(cur)sel.value=cur
+  }catch(e){console.error(e)}
+}
+document.getElementById('mic-select').addEventListener('change',function(){micDeviceId=this.value})
+async function selectSystemAudio(){
+  try{
+    const stream=await navigator.mediaDevices.getDisplayMedia({audio:true,video:false})
+    const track=stream.getAudioTracks()[0]
+    if(track){
+      micDeviceId='__system_audio__'
+      const btn=document.getElementById('sys-audio-btn')
+      btn.textContent='✓ System audio selected'
+      btn.style.borderColor='var(--accent)'
+      btn.style.color='#a78bfa'
+      stream.getTracks().forEach(t=>t.stop())
+    }else{
+      alert('No audio track found. Check "Share audio" in the dialog.')
+    }
+  }catch(e){console.error(e)}
+}
+function updateSilence(v){
+  silenceMs=parseInt(v)
+  document.getElementById('silence-val').textContent=(silenceMs/1000).toFixed(1)+'s'
+}
+
+// ── File upload ────────────────────────────────────────────────────────────
+function setupUploadZone(){
+  const zone=document.getElementById('upload-zone')
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.style.borderColor='var(--accent)'})
+  zone.addEventListener('dragleave',()=>{zone.style.borderColor=''})
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.style.borderColor='';handleFiles(e.dataTransfer.files)})
+}
+async function handleFiles(files){
+  if(!files||!files.length)return
+  document.getElementById('upload-label').textContent='⏳ Extracting…'
+  for(const file of Array.from(files)){
+    try{
+      let text=''
+      if(file.name.toLowerCase().endsWith('.pdf')||file.type==='application/pdf'){
+        // Use PDF.js CDN for client-side parsing
+        text=await extractPdf(file)
+      }else{
+        text=await file.text()
+      }
+      const label=`=== ${file.name} ===\n${text.trim()}`
+      contextText=contextText.trim()?contextText+'\n\n---\n'+label:label
+      document.getElementById('ctx-area').value=contextText
+      const tags=document.getElementById('file-tags')
+      const tag=document.createElement('div')
+      tag.className='file-tag'
+      tag.innerHTML=`<span>✓ ${file.name}</span><span>${text.length.toLocaleString()} chars</span>`
+      tags.appendChild(tag)
+    }catch(e){console.error(e)}
+  }
+  document.getElementById('upload-label').textContent='📄 Upload PDF or TXT — click or drag & drop'
+}
+async function extractPdf(file){
+  // Load PDF.js from CDN dynamically
+  if(!window.pdfjsLib){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script')
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+      s.onload=res;s.onerror=rej
+      document.head.appendChild(s)
+    })
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+  }
+  const buf=await file.arrayBuffer()
+  const pdf=await window.pdfjsLib.getDocument({data:buf}).promise
+  const pages=[]
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i)
+    const content=await page.getTextContent()
+    pages.push(content.items.map(it=>it.str).join(' '))
+  }
+  return pages.join('\n')
+}
+
+// ── Voice Enrollment ────────────────────────────────────────────────────────
+async function toggleEnroll(){
+  if(enrollState==='recording')return
+  if(enrollState==='done'){
+    // redo
+    voiceProfile=null;enrollState='idle'
+    document.getElementById('enroll-badge').textContent='Not enrolled'
+    document.getElementById('enroll-badge').className='enroll-badge'
+    document.getElementById('enroll-btn').textContent='🎤 Record my voice (30 sec)'
+    document.getElementById('enroll-btn').className='enroll-btn'
+    document.getElementById('enroll-info').textContent=''
+    return
+  }
+  enrollState='recording'
+  enrollPitches=[]
+  document.getElementById('enroll-recording').style.display='block'
+  document.getElementById('enroll-btn').style.display='none'
+  try{
+    const stream=micStream||await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false}})
+    if(!micStream)micStream=stream
+    const ctx=new AudioContext()
+    const src=ctx.createMediaStreamSource(stream)
+    const analyser=ctx.createAnalyser()
+    analyser.fftSize=2048
+    src.connect(analyser)
+    const buf=new Float32Array(analyser.fftSize)
+    enrollStream=null;enrollCtx=ctx  // don't stop the shared stream on finish
+    const start=Date.now()
+    enrollInterval=setInterval(()=>{
+      analyser.getFloatTimeDomainData(buf)
+      const p=detectPitch(buf,ctx.sampleRate)
+      if(p>0)enrollPitches.push(p)
+      const elapsed=Date.now()-start
+      const pct=Math.min(100,(elapsed/30000)*100)
+      document.getElementById('enroll-bar').style.width=pct+'%'
+      document.getElementById('enroll-info-text').textContent=`Recording… ${Math.ceil((30000-elapsed)/1000)}s left — ${enrollPitches.length} samples`
+    },100)
+    enrollTimeout=setTimeout(()=>{
+      clearInterval(enrollInterval)
+      finishEnroll()
+    },30000)
+  }catch(e){
+    enrollState='error'
+    document.getElementById('enroll-recording').style.display='none'
+    document.getElementById('enroll-btn').style.display='block'
+    document.getElementById('enroll-btn').textContent='↺ Try again'
+    document.getElementById('enroll-btn').className='enroll-btn error-btn'
+    document.getElementById('enroll-info').textContent='Microphone access denied.'
+  }
+}
+function finishEnroll(){
+  // enrollStream is null (shared micStream, don't stop it)
+  if(enrollCtx)enrollCtx.close()
+  document.getElementById('enroll-recording').style.display='none'
+  document.getElementById('enroll-btn').style.display='block'
+  const profile=buildProfile(enrollPitches)
+  if(!profile){
+    enrollState='error'
+    document.getElementById('enroll-btn').textContent='↺ Try again'
+    document.getElementById('enroll-btn').className='enroll-btn error-btn'
+    document.getElementById('enroll-info').textContent=`⚠ Too few samples (${enrollPitches.length}). Speak more continuously.`
+    return
+  }
+  voiceProfile=profile
+  enrollState='done'
+  document.getElementById('enroll-badge').textContent='✓ Enrolled'
+  document.getElementById('enroll-badge').className='enroll-badge done'
+  document.getElementById('enroll-btn').textContent=`✓ Voice enrolled — ${profile.samples} samples  (click to redo)`
+  document.getElementById('enroll-btn').className='enroll-btn done-btn'
+  document.getElementById('enroll-info').textContent=`Fundamental: ${profile.mean.toFixed(1)} Hz (${profile.min.toFixed(0)}–${profile.max.toFixed(0)} Hz)`
+}
+function startInterview(){
+  contextText=document.getElementById('ctx-area').value
+  localStorage.setItem('ia-config',JSON.stringify({language,silenceThreshold:silenceMs,micDeviceId}))
+  buildTopLangs()
+  setStatus('idle','Press START to begin')
+  document.getElementById('main-area').innerHTML='<div class="empty-state" id="empty-state"><div class="empty-icon">🎙️</div><div class="empty-text">Press START — the app listens continuously and generates automatically when the interviewer stops speaking.<br><br>Your voice is automatically ignored.</div></div>'
+  currentResponse='';history=[];accumulated='';interim=''
+  document.getElementById('sbar-fill').style.width='0'
+  document.getElementById('voice-badge').style.display=voiceProfile?'inline-block':'none'
+  document.getElementById('voice-badge').className='voice-badge'
+  document.getElementById('voice-badge').textContent='🎤 voice gate ON'
+  show('interview')
+}
+
+// ══════════════════════════ INTERVIEW ═════════════════════════════════════
+function buildTopLangs(){
+  const c=document.getElementById('top-langs')
+  c.innerHTML=LANGS.map(l=>`<button class="top-lang${l.code===language?' active':''}" onclick="switchLang('${l.code}')">${l.flag} ${l.label}</button>`).join('')
+}
+function switchLang(code){
+  language=code
+  buildTopLangs()
+  if(isActive&&!isGenerating&&!isPaused){stopRec();setTimeout(startRec,200)}
+}
+function goSetup(){
+  stopSession()
+  show('setup')
+}
+function setStatus(cls,txt){
+  const dot=document.getElementById('status-dot')
+  dot.className='status-dot '+cls
+  document.getElementById('status-text').textContent=txt
+}
+
+// ── Silence ─────────────────────────────────────────────────────────────────
+function clearSilence(){
+  if(silenceTimer)clearTimeout(silenceTimer)
+  if(silenceAnimFrame)cancelAnimationFrame(silenceAnimFrame)
+  silenceTimer=null;silenceAnimFrame=null;silenceStart=null
+  silenceWidth=0;document.getElementById('sbar-fill').style.width='0'
+}
+function animSilence(){
+  if(!silenceStart)return
+  const pct=Math.min(100,((Date.now()-silenceStart)/silenceMs)*100)
+  silenceWidth=pct;document.getElementById('sbar-fill').style.width=pct+'%'
+  if(pct<100)silenceAnimFrame=requestAnimationFrame(animSilence)
+}
+function scheduleSilence(){
+  clearSilence()
+  silenceStart=Date.now()
+  animSilence()
+  silenceTimer=setTimeout(()=>{
+    cancelAnimationFrame(silenceAnimFrame)
+    silenceWidth=100;document.getElementById('sbar-fill').style.width='100%'
+    forceGenerate()
+  },silenceMs)
+}
+
+// ── Speech recognition ────────────────────────────────────────────────────
+function startRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition
+  if(!SR){showError('Requires Chrome or Edge.');return}
+  const lang=LANGS.find(l=>l.code===language)
+  accumulated='';interim=''
+  updateHeard()
+  const rec=new SR()
+  rec.continuous=true;rec.interimResults=true;rec.lang=lang.stt
+  rec.onresult=e=>{
+    if(isGenerating||isPaused)return
+    let fin='',inter=''
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript
+      if(e.results[i].isFinal)fin+=t+' ';else inter+=t
+    }
+    if(isUserSpeaking&&voiceProfile){setStatus('muted','Filtering your voice…');return}
+    if(fin)accumulated+=fin
+    interim=inter
+    updateHeard()
+    if((accumulated+inter).trim())scheduleSilence()
+    if(!isUserSpeaking)setStatus('listening',`Listening in ${lang.name}…`)
+  }
+  rec.onerror=e=>{
+    if(e.error==='not-allowed')showError('Microphone access denied.')
+    else if(e.error!=='no-speech'&&e.error!=='aborted')showError('Mic error: '+e.error)
+  }
+  rec.onend=()=>{if(isActive&&!isGenerating&&!isPaused)try{rec.start()}catch(e){}}
+  recognition=rec
+  try{rec.start()}catch(e){}
+  nowDisabled=false
+  document.getElementById('now-btn').disabled=false
+}
+function stopRec(){
+  if(recognition){recognition.onend=null;try{recognition.stop()}catch(e){}}
+  recognition=null
+}
+function updateHeard(){
+  const area=document.getElementById('main-area')
+  let hbox=document.getElementById('heard-box')
+  if(!accumulated&&!interim){if(hbox)hbox.remove();return}
+  if(!hbox){
+    hbox=document.createElement('div')
+    hbox.id='heard-box';hbox.className='heard-box'
+    hbox.innerHTML='<div class="heard-label">Heard</div><div class="heard-text" id="heard-text"></div>'
+    area.appendChild(hbox)
+  }
+  document.getElementById('heard-text').innerHTML=`${accumulated}<span class="heard-interim">${interim}</span>`
+}
+
+// ── Pitch monitor (voice gate) ─────────────────────────────────────────────
+function startPitchMonitor(){
+  if(!voiceProfile)return
+  const attach=stream=>{
+    const ctx=new AudioContext()
+    const src=ctx.createMediaStreamSource(stream)
+    const analyser=ctx.createAnalyser()
+    analyser.fftSize=2048
+    src.connect(analyser)
+    const buf=new Float32Array(analyser.fftSize)
+    pitchCtx=ctx
+    pitchInterval=setInterval(()=>{
+      if(!isActive)return
+      analyser.getFloatTimeDomainData(buf)
+      const pitch=detectPitch(buf,ctx.sampleRate)
+      if(pitch>0){
+        const mine=isUserVoice(pitch)
+        const badge=document.getElementById('voice-badge')
+        if(mine){
+          isUserSpeaking=true
+          if(badge){badge.className='voice-badge me';badge.textContent='🔇 your voice'}
+          if(userSpeakingTO)clearTimeout(userSpeakingTO)
+          userSpeakingTO=setTimeout(()=>{isUserSpeaking=false;if(badge){badge.className='voice-badge';badge.textContent='🎤 voice gate ON'}},600)
+        }else{
+          if(badge&&!isUserSpeaking){badge.className='voice-badge other';badge.textContent='👂 interviewer'}
+        }
+      }
+    },100)
+  }
+  if(micDeviceId==='__system_audio__'){
+    navigator.mediaDevices.getDisplayMedia({audio:true,video:false}).then(attach).catch(()=>{})
+  }else if(micStream){
+    // Reuse already-authorized stream — no permission prompt
+    attach(micStream)
+  }else{
+    const c=micDeviceId?{audio:{deviceId:{exact:micDeviceId},echoCancellation:false,noiseSuppression:false}}:{audio:{echoCancellation:false,noiseSuppression:false}}
+    navigator.mediaDevices.getUserMedia(c).then(s=>{micStream=s;attach(s)}).catch(()=>{})
+  }
+}
+function stopPitchMonitor(){
+  if(pitchInterval)clearInterval(pitchInterval)
+  if(pitchCtx)pitchCtx.close()
+  pitchCtx=null;isUserSpeaking=false
+}
+
+// ── Generate response ───────────────────────────────────────────────────────
+async function generateResponse(question){
+  if(isGenerating)return
+  isGenerating=true;clearSilence();stopRec()
+  setStatus('generating','Generating response…')
+  showError('')
+  accumulated='';interim='';updateHeard()
+  nowDisabled=true;document.getElementById('now-btn').disabled=true
+  try{
+    const lang=LANGS.find(l=>l.code===language)
+    const contextBlock=contextText.trim()?`\n\nUSER BACKGROUND:\n${contextText.trim()}`:''
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-allow-browser':'true',
+        'content-type':'application/json',
+      },
+      body:JSON.stringify({
+        model:'claude-3-5-sonnet-20241022',
+        max_tokens:350,
+        system:`You are a real-time interview assistant. The user reads your response aloud immediately during a live job or professional interview.${contextBlock}\n\nRULES:\n- Respond ONLY in ${lang.name}\n- Use natural spoken language — no written-style phrases\n- Maximum 4–5 sentences, never more\n- No bullet points, no numbered lists, no markdown, no headers\n- Do not repeat the question back\n- Output ONLY the spoken response text — no preambles\n- Be confident, warm, and professional`,
+        messages:[{role:'user',content:question.trim()}]
+      })
+    })
+    const data=await res.json()
+    if(data.error)throw new Error(data.error.message||JSON.stringify(data.error))
+    const text=data.content?.[0]?.text?.trim()||''
+    currentResponse=text
+    showResponse(text,lang)
+    history.unshift({question,response:text,ts:Date.now()})
+    if(history.length>HISTORY_MAX)history.pop()
+    rebuildHistory()
+    if(isActive){
+      isPaused=true;skipDisabled=false
+      document.getElementById('skip-btn').disabled=false
+      let remaining=PAUSE_MS
+      pauseTimer=setInterval(()=>{
+        remaining-=200
+        if(remaining<=0){
+          clearInterval(pauseTimer);pauseTimer=null
+          isPaused=false;skipDisabled=true
+          document.getElementById('skip-btn').disabled=true
+          setStatus('listening',`Listening in ${lang.name}…`)
+          startRec()
+        }else{
+          setStatus('ready',`Your turn — resuming in ${Math.ceil(remaining/1000)}s  |  SKIP to listen now`)
+        }
+      },200)
+    }
+  }catch(e){
+    showError(e.message||'API error')
+    setStatus('idle','Error — check connection')
+    isGenerating=false
+    if(isActive){const lang=LANGS.find(l=>l.code===language);setStatus('listening',`Listening in ${lang.name}…`);startRec()}
+    return
+  }
+  isGenerating=false
+}
+function showResponse(text,lang){
+  const area=document.getElementById('main-area')
+  const es=document.getElementById('empty-state')
+  if(es)es.remove()
+  const old=document.getElementById('response-card')
+  if(old)old.remove()
+  const card=document.createElement('div')
+  card.id='response-card';card.className='response-card'
+  card.innerHTML=`<div class="response-tag">${lang?.flag||''} READ ALOUD →</div><div class="response-text">${escHtml(text)}</div>`
+  area.insertBefore(card,area.firstChild)
+  setStatus('ready','Your turn to speak')
+}
+function rebuildHistory(){
+  const area=document.getElementById('main-area')
+  let hs=document.getElementById('history-section')
+  if(hs)hs.remove()
+  if(history.length<=1)return
+  hs=document.createElement('div');hs.id='history-section';hs.className='history-section'
+  hs.innerHTML='<div class="history-label">Previous Exchanges</div>'+history.slice(1).map((ex,i)=>`
+    <div class="history-item" style="opacity:${Math.max(0.3,0.75-i*0.15)}">
+      <div class="history-q">Q: ${escHtml(ex.question.slice(0,90))}${ex.question.length>90?'…':''}</div>
+      <div class="history-a">${escHtml(ex.response.slice(0,130))}${ex.response.length>130?'…':''}</div>
+    </div>`).join('')
+  area.appendChild(hs)
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function showError(msg){
+  let el=document.getElementById('error-text')
+  if(!msg){if(el)el.remove();return}
+  if(!el){el=document.createElement('div');el.id='error-text';el.className='error-text';document.getElementById('main-area').appendChild(el)}
+  el.textContent=msg
+}
+
+// ── Session control ─────────────────────────────────────────────────────────
+function toggleSession(){
+  if(isActive)stopSession();else startSession()
+}
+function startSession(){
+  isActive=true;showError('')
+  const lang=LANGS.find(l=>l.code===language)
+  setStatus('listening',`Listening in ${lang.name}…`)
+  document.getElementById('start-stop-btn').textContent='⏹ STOP'
+  document.getElementById('start-stop-btn').className='ctrl-main stop'
+  startRec();startPitchMonitor()
+  // expose for PiP
+  window.__ia_toggleSession=toggleSession
+  window.__ia_forceGenerate=forceGenerate
+  window.__ia_skipPause=skipPause
+}
+function stopSession(){
+  isActive=false;isPaused=false;isGenerating=false
+  stopRec();stopPitchMonitor();clearSilence()
+  if(pauseTimer){clearInterval(pauseTimer);pauseTimer=null}
+  nowDisabled=true;skipDisabled=true
+  document.getElementById('now-btn').disabled=true
+  document.getElementById('skip-btn').disabled=true
+  document.getElementById('start-stop-btn').textContent='🎙️ START'
+  document.getElementById('start-stop-btn').className='ctrl-main'
+  setStatus('idle','Press START to begin')
+}
+function forceGenerate(){
+  const q=(accumulated+interim).trim()
+  if(!q){setStatus('listening','Nothing heard yet…');return}
+  generateResponse(q)
+}
+function skipPause(){
+  if(!isPaused)return
+  if(pauseTimer){clearInterval(pauseTimer);pauseTimer=null}
+  isPaused=false;skipDisabled=true
+  document.getElementById('skip-btn').disabled=true
+  const lang=LANGS.find(l=>l.code===language)
+  setStatus('listening',`Listening in ${lang.name}…`)
+  startRec()
+}
+
+// ── Document PiP ───────────────────────────────────────────────────────────
+async function openFloat(){
+  if(!window.documentPictureInPicture){alert('Floating window requires Chrome 116+.');return}
+  if(pipWin&&!pipWin.closed){pipWin.close();pipWin=null;document.getElementById('pip-btn').className='pip-btn-main';if(pipSync)clearInterval(pipSync);return}
+  try{
+    pipWin=await window.documentPictureInPicture.requestWindow({width:500,height:200,disallowReturnToOpener:false})
+    const style=pipWin.document.createElement('style')
+    style.textContent=`
+      @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=DM+Mono&display=swap');
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{background:#060608;color:#e8e8f0;font-family:'Syne',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+      .ps{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#0c0c14;border-bottom:1px solid #1e1e30;flex-shrink:0}
+      .pd{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+      .pd.listening{background:#4ade80;box-shadow:0 0 6px rgba(74,222,128,.6)}
+      .pd.generating{background:#6d5cff;box-shadow:0 0 6px rgba(109,92,255,.6)}
+      .pd.idle{background:#4a4a6a}.pd.ready{background:#facc15}.pd.muted{background:#ff5c8a}
+      .pt{font-size:.7rem;font-family:'DM Mono',monospace;color:#4a4a6a;flex:1}
+      .pb{display:flex;gap:6px}
+      .btn{padding:3px 10px;border-radius:5px;border:1px solid #1e1e30;background:transparent;color:#4a4a6a;font-size:.7rem;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;transition:all .1s}
+      .btn:hover:not(:disabled){border-color:#6d5cff;color:#a78bfa}
+      .btn:disabled{opacity:.3;cursor:not-allowed}
+      .btn.go{background:linear-gradient(135deg,#6d5cff,#4f46e5);border-color:transparent;color:white}
+      .pb-body{flex:1;padding:12px 16px;overflow:hidden;display:flex;align-items:center}
+      .pr{font-size:clamp(1rem,2.5vw,1.3rem);line-height:1.5;color:#f0f0ff;font-weight:600}
+      .ph{font-size:.75rem;color:#4a4a6a;font-family:'DM Mono',monospace;padding:0 16px 8px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .pe{color:#2a2a40;font-size:.85rem;text-align:center;width:100%}
+      .sw{height:2px;background:#1e1e30;flex-shrink:0}
+      .sf{height:100%;background:linear-gradient(90deg,#6d5cff,#ff5c8a);width:0%}`
+    pipWin.document.head.appendChild(style)
+    pipWin.document.body.innerHTML=`
+      <div class="ps">
+        <div class="pd idle" id="pd"></div>
+        <div class="pt" id="pt">Waiting…</div>
+        <div class="pb">
+          <button class="btn" id="pn" onclick="window.opener&&window.opener.__ia_forceGenerate&&window.opener.__ia_forceGenerate()" disabled>✦ NOW</button>
+          <button class="btn" id="ps2" onclick="window.opener&&window.opener.__ia_skipPause&&window.opener.__ia_skipPause()" disabled>⏭</button>
+          <button class="btn go" id="ptog" onclick="window.opener&&window.opener.__ia_toggleSession&&window.opener.__ia_toggleSession()">START</button>
+        </div>
+      </div>
+      <div class="sw"><div class="sf" id="sf"></div></div>
+      <div class="pb-body"><div class="pr pe" id="pr">Press START to begin…</div></div>
+      <div class="ph" id="ph"></div>`
+    document.getElementById('pip-btn').className='pip-btn-main active'
+    const getStatus=()=>document.getElementById('status-dot')?.className?.replace('status-dot ','')?.trim()||'idle'
+    const getStatusText=()=>document.getElementById('status-text')?.textContent||''
+    pipSync=setInterval(()=>{
+      const pw=pipWin
+      if(!pw||pw.closed){clearInterval(pipSync);pipWin=null;document.getElementById('pip-btn').className='pip-btn-main';return}
+      try{
+        const d=pw.document
+        const dot=d.getElementById('pd'),txt=d.getElementById('pt'),resp=d.getElementById('pr'),heard=d.getElementById('ph'),sf=d.getElementById('sf'),pn=d.getElementById('pn'),ps2=d.getElementById('ps2'),ptog=d.getElementById('ptog')
+        if(!dot)return
+        const st=getStatus()
+        dot.className='pd '+st
+        if(txt)txt.textContent=getStatusText()
+        if(resp){
+          if(currentResponse){resp.className='pr';resp.textContent=currentResponse}
+          else if(!isActive){resp.className='pr pe';resp.textContent='Press START to begin…'}
+          else if(isGenerating){resp.className='pr pe';resp.textContent='Generating…'}
+          else{resp.className='pr pe';resp.textContent='Listening…'}
+        }
+        if(heard){const h=accumulated||interim;heard.textContent=h?'👂 '+h.slice(0,80):''}
+        if(sf)sf.style.width=silenceWidth+'%'
+        if(pn)pn.disabled=nowDisabled
+        if(ps2)ps2.disabled=skipDisabled
+        if(ptog){ptog.textContent=isActive?'⏹ STOP':'▶ START';ptog.style.background=isActive?'linear-gradient(135deg,#dc2626,#991b1b)':'linear-gradient(135deg,#6d5cff,#4f46e5)'}
+      }catch(e){}
+    },200)
+    pipWin.addEventListener('pagehide',()=>{clearInterval(pipSync);pipWin=null;document.getElementById('pip-btn').className='pip-btn-main'})
+  }catch(e){console.error(e)}
+}
+
+// ══════════════════════════ BOOT ═══════════════════════════════════════════
+// Pre-authorize microphone and keep the stream alive to avoid repeated permission prompts
+navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false}})
+  .then(s=>{micStream=s})
+  .catch(()=>{})
+
+init()
+</script>
+</body>
+</html>
